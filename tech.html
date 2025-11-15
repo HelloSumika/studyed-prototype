@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StudyEd — Genius Demo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --bg:#061223; --card:#0f1724; --muted:#9faeb8; --accent:#5ee7c1; --accent2:#7cc1ff;
+  }
+  *{box-sizing:border-box}
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#031017,#071827);color:#eaf7f1;margin:0;padding:0}
+  .wrap{max-width:1150px;margin:24px auto;padding:18px}
+  header{display:flex;gap:14px;align-items:center}
+  .logo{width:64px;height:64px;border-radius:10px;object-fit:cover}
+  h1{margin:0;font-size:20px}
+  p.lead{margin:4px 0 0;color:var(--muted);font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 440px;gap:16px;margin-top:16px}
+  .card{background:var(--card);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
+  label{display:block;font-size:13px;color:var(--muted); margin:6px 0 6px}
+  input[type=text], input[type=number], select {width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+  button{background:var(--accent);color:#042225;border:none;padding:9px 12px;border-radius:8px;cursor:pointer}
+  .muted{color:var(--muted)}
+  .student-list{max-height:420px;overflow:auto;margin-top:10px}
+  .student{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));margin-bottom:8px}
+  .avatar{width:46px;height:46px;border-radius:8px;background:linear-gradient(90deg,#205a6b,#2b5560);display:flex;align-items:center;justify-content:center;font-weight:700;color:white}
+  .small{font-size:12px;color:var(--muted)}
+  .group{padding:12px;border-radius:10px;background:linear-gradient(90deg, rgba(92,235,195,0.03), rgba(255,255,255,0.01));margin-bottom:12px;border:1px solid rgba(92,235,195,0.03)}
+  .score{float:right;background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;color:var(--accent);font-weight:700}
+  pre{background:#07111a;padding:10px;border-radius:8px;overflow:auto;color:#cfeee3}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  footer{margin-top:16px;color:var(--muted);text-align:center;font-size:12px}
+  @media (max-width:980px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img class="logo" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800&auto=format&fit=crop&s=ea29a7a2b7f4b5a0c4a9e3b2b0b8f6f7" alt="logo">
+      <div>
+        <h1>StudyEd — Intelligent Team Builder</h1>
+        <p class="lead">Career & learning-style aligned teams with starter packs. Transparent, ethical, usable.</p>
+      </div>
+    </header>
+
+    <!-- Consent modal quick -->
+    <div id="consentBox" class="card" style="margin-top:12px">
+      <strong>Privacy & Consent</strong>
+      <div class="muted small">StudyEd stores only optional profile data locally for this demo. In production we follow GDPR: students opt-in to share career tags and contact details.</div>
+      <div style="margin-top:10px" class="controls">
+        <label style="display:flex;gap:8px;align-items:center"><input id="consentCareer" type="checkbox" checked/> I consent to sharing career tags (required for career-aligned groups)</label>
+        <label style="display:flex;gap:8px;align-items:center"><input id="consentPublic" type="checkbox" checked/> I allow my name to appear in group member list</label>
+        <button id="hideConsent">Continue (consent saved)</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- left -->
+      <div>
+        <div class="card">
+          <strong>Add / Edit Student Profile</strong>
+          <div class="small muted">3-min profile: career tags, two skills, preferred roles and VARK sliders.</div>
+          <label>Name <input id="name" type="text"></label>
+          <label>Career interests (comma) <input id="interests" type="text" placeholder="consulting, marketing"></label>
+          <label>Skills (comma) <input id="skills" type="text" placeholder="presenting, analysis"></label>
+          <label>Preferred roles (comma) <input id="roles" type="text" placeholder="presenter, analyst"></label>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <input id="vark_v" type="number" min="0" max="100" value="25"/>
+            <input id="vark_a" type="number" min="0" max="100" value="25"/>
+            <input id="vark_r" type="number" min="0" max="100" value="25"/>
+            <input id="vark_k" type="number" min="0" max="100" value="25"/>
+          </div>
+          <div class="controls" style="margin-top:10px">
+            <button id="addBtn">Add profile</button>
+            <button id="seedBtn" style="background:var(--accent2)">Load sample</button>
+            <button id="clearBtn" style="background:#ff7b7b">Clear all</button>
+            <div style="margin-left:auto" class="small muted">Profiles: <span id="count">0</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <strong>Teacher — Assignment & Weights</strong>
+          <label>Assignment name <input id="assignmentName" type="text" placeholder="Consulting pitch"></label>
+          <label>Group size <input id="groupSize" type="number" min="2" max="8" value="4"></label>
+          <label>Required roles (comma) <input id="reqRoles" type="text" placeholder="presenter, analyst"></label>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <div style="flex:1"><label class="small muted">Career weight <input id="wInterest" type="range" min="0" max="100" value="55"></label></div>
+            <div style="flex:1"><label class="small muted">VARK weight <input id="wVark" type="range" min="0" max="100" value="30"></label></div>
+            <div style="flex:1"><label class="small muted">Role weight <input id="wRole" type="range" min="0" max="100" value="15"></label></div>
+          </div>
+          <div class="controls" style="margin-top:8px">
+            <button id="matchBtn">Run match</button>
+            <button id="exportBtn" style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <strong>Profiles</strong>
+          <div class="student-list" id="studentList"></div>
+        </div>
+      </div>
+
+      <!-- right -->
+      <div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Groups & Starter Packs</strong>
+            <div class="small muted">Click group → see Starter Pack + scoring</div>
+          </div>
+          <div id="groupsArea" style="margin-top:10px"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <strong>Explainability</strong>
+          <pre id="explainArea">Select a group to see the scoring breakdown and starter tasks.</pre>
+        </div>
+      </div>
+    </div>
+
+    <footer>Demo: runs locally. Production notes: server-side embeddings + LLM for rich starter packs; GDPR-first design required.</footer>
+  </div>
+
+<script>
+/* =================
+   StudyEd: Genius Demo
+   - Single-file browser demo
+   - Clear structure, deterministic seeding, explainability, consent
+   ================== */
+
+// ---------- Helpers ----------
+const uid = ()=>Math.random().toString(36).slice(2,9);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const avg = arr => arr.reduce((s,x)=>s+x,0)/Math.max(1,arr.length);
+
+// seeded RNG for reproducible demos
+function mulberry32(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rng = mulberry32(20251127);
+
+// ---------- Data ----------
+let students = [];
+let groups = [];
+
+// ---------- Basic text processing ----------
+function tokenize(s){ return (s||'').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); }
+function buildVocab(){
+  const set = new Set();
+  students.forEach(s=>{
+    s.interests.forEach(i=>tokenize(i).forEach(t=>set.add(t)));
+    s.skills.forEach(k=>tokenize(k).forEach(t=>set.add(t)));
+  });
+  return Array.from(set);
+}
+function textVecFor(s, vocab){
+  const vec = new Array(vocab.length).fill(0);
+  const tokens = tokenize((s.interests||[]).join(' ') + ' ' + (s.skills||[]).join(' '));
+  tokens.forEach(t=>{ const i = vocab.indexOf(t); if(i>=0) vec[i] += 1; });
+  return vec;
+}
+function dot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
+function norm(a){ return Math.sqrt(a.reduce((s,x)=>s+x*x,0)); }
+function cosine(a,b){ const na=norm(a), nb=norm(b); if(na===0||nb===0) return 0; return dot(a,b)/(na*nb); }
+
+// ---------- VARK normalization ----------
+function normalizedVark(v){ const s=(v.v||0)+(v.a||0)+(v.r||0)+(v.k||0) || 1; return [(v.v||0)/s,(v.a||0)/s,(v.r||0)/s,(v.k||0)/s]; }
+
+// ---------- Combined vector (text normalized + vark appended) ----------
+function combinedVec(s, vocab, wText=1, wVark=1){
+  const t = textVecFor(s, vocab);
+  const tnorm = norm(t) || 1;
+  const textNormalized = t.map(x=>x/tnorm * wText);
+  const v = normalizedVark(s.vark).map(x=>x*wVark);
+  return textNormalized.concat(v);
+}
+
+// ---------- KMeans (simple, deterministic) ----------
+function kmeans(data, k=2, iters=20){
+  const dim = data[0].length;
+  const centers = [];
+  // init centers pick distinct indices
+  const used = new Set();
+  while(centers.length<k){
+    const idx = Math.floor(rng()*data.length);
+    if(!used.has(idx)){ used.add(idx); centers.push(data[idx].slice()); }
+  }
+  let assign = new Array(data.length).fill(0);
+  for(let it=0; it<iters; it++){
+    let moved=false;
+    for(let i=0;i<data.length;i++){
+      let best=0, bestd=-Infinity;
+      for(let c=0;c<k;c++){
+        const sim = cosine(data[i], centers[c]);
+        if(sim>bestd){ bestd=sim; best=c; }
+      }
+      if(assign[i]!==best){ moved=true; assign[i]=best; }
+    }
+    if(!moved) break;
+    // recompute
+    for(let c=0;c<k;c++){
+      const sum = new Array(dim).fill(0); let cnt=0;
+      for(let i=0;i<data.length;i++) if(assign[i]===c){ for(let d=0; d<dim; d++) sum[d]+=data[i][d]; cnt++; }
+      if(cnt>0) for(let d=0; d<dim; d++) centers[c][d] = sum[d]/cnt;
+    }
+  }
+  return {assign, centers};
+}
+
+// ---------- scoring functions ----------
+function varkVariance(groupIds){
+  const arr = groupIds.map(id => normalizedVark(students.find(s=>s.id===id).vark));
+  const means=[0,0,0,0]; arr.forEach(a=>{ for(let i=0;i<4;i++) means[i]+=a[i]/arr.length; });
+  const vars=[0,0,0,0]; arr.forEach(a=>{ for(let i=0;i<4;i++){ const d=a[i]-means[i]; vars[i]+=d*d/arr.length; }});
+  const std = Math.sqrt((vars[0]+vars[1]+vars[2]+vars[3])/4);
+  return clamp(std,0,1);
+}
+function roleCoverage(groupIds, reqRoles){
+  if(!reqRoles || reqRoles.length===0) return 1;
+  let covered=0;
+  reqRoles.forEach(r=>{ const rr=r.toLowerCase(); if(groupIds.some(id=>students.find(s=>s.id===id).roles.map(x=>x.toLowerCase()).includes(rr))) covered++; });
+  return covered / reqRoles.length;
+}
+function avgPairwiseTextSim(groupIds, textEmbeddings){
+  if(groupIds.length<2) return 0.5;
+  let sum=0,count=0;
+  const idxs = groupIds.map(id=>students.findIndex(s=>s.id===id));
+  for(let i=0;i<idxs.length;i++) for(let j=i+1;j<idxs.length;j++){ sum+=cosine(textEmbeddings[idxs[i]], textEmbeddings[idxs[j]]); count++; }
+  return count ? sum/count : 0;
+}
+
+// ---------- Main matching engine ----------
+function matchEngine(groupSize, requiredRoles, weights){
+  groups = [];
+  if(students.length < groupSize) return groups;
+  const vocab = buildVocab();
+  const textEmb = students.map(s => textVecFor(s, vocab));
+  const combined = students.map(s => combinedVec(s, vocab, weights.interest, weights.vark));
+  // cluster count
+  const k = Math.max(1, Math.ceil(students.length / groupSize));
+  const {assign} = kmeans(combined, k, 25);
+  const buckets = {};
+  assign.forEach((c, idx)=>{ buckets[c] = buckets[c] || []; buckets[c].push(students[idx].id); });
+  const assembled = [];
+  Object.values(buckets).forEach(bucket=>{
+    const pool = bucket.slice();
+    while(pool.length >= groupSize){
+      // seed: choose person with most combined profile richness
+      pool.sort((a,b)=> {
+        const A = students.find(s=>s.id===a), B = students.find(s=>s.id===b);
+        return (B.interests.length + B.skills.length) - (A.interests.length + A.skills.length);
+      });
+      const seed = pool.shift();
+      const group = [seed];
+      while(group.length < groupSize){
+        let best=-Infinity,bestId=null;
+        pool.forEach(candidate=>{
+          const candGroup = group.concat([candidate]);
+          const sim = avgPairwiseTextSim(candGroup, textEmb);
+          const vvar = varkVariance(candGroup);
+          const rcov = roleCoverage(candGroup, requiredRoles);
+          const score = weights.interest*sim + weights.vark*(1 - vvar) + weights.role*rcov;
+          if(score > best){ best=score; bestId=candidate; }
+        });
+        if(!bestId) break;
+        group.push(bestId);
+        pool.splice(pool.indexOf(bestId),1);
+      }
+      assembled.push({members: group, score: Math.round((weights.interest*avgPairwiseTextSim(group,textEmb) + weights.vark*(1 - varkVariance(group)) + weights.role*roleCoverage(group,requiredRoles))*100)});
+    }
+    if(pool.length>0) assembled.push({members: pool.splice(0), score:0});
+  });
+  // merge leftovers to nearest groups (simple)
+  const finals = assembled.filter(g=>g.members.length>0);
+  const smallGroups = finals.filter(g=>g.members.length < groupSize);
+  smallGroups.forEach(sg=>{
+    // append members to smallest groups first
+    let mems = sg.members.slice();
+    while(mems.length){
+      // find target group with smallest size
+      finals.sort((a,b)=>a.members.length - b.members.length);
+      finals[0].members.push(mems.shift());
+    }
+  });
+  finals.forEach(g=> g.score = Math.round((weights.interest*avgPairwiseTextSim(g.members,textEmb) + weights.vark*(1 - varkVariance(g.members)) + weights.role*roleCoverage(g.members,requiredRoles))*100));
+  groups = finals;
+  return groups;
+}
+
+// ---------- Starter pack generator (deterministic) ----------
+function starterPackFor(group){
+  const members = group.members.map(id=>students.find(s=>s.id===id));
+  const topCareerCounts = {};
+  members.forEach(m=> m.interests.forEach(i => topCareerCounts[i] = (topCareerCounts[i]||0)+1));
+  const topCareer = Object.keys(topCareerCounts).sort((a,b)=>topCareerCounts[b]-topCareerCounts[a])[0] || 'General';
+  // assign roles from preferences
+  const assign = {};
+  members.forEach(m => assign[m.name] = (m.roles && m.roles[0]) ? m.roles[0] : 'Member');
+  const bullets = [
+    `Project focus: ${topCareer}`,
+    `Team members: ${members.map(m=>m.name).join(', ')}`,
+    `Assigned roles: ${Object.entries(assign).map(([n,r])=>`${n} → ${r}`).join('; ')}`,
+    `Kickoff: 1) 20–30 min alignment meeting; 2) split research & slides; 3) schedule rehearsal.`,
+    `Deliverables: 10-min presentation (max 10 slides), 1-page exec summary, editable slide deck.`,
+    `Tip: use the first meeting to set deadlines and record one rehearsal for feedback.`
+  ];
+  const roleSpecs = Object.entries(assign).map(([n,r])=>({
+    name:n, role:r, bullets: [
+      `Top responsibility: deliver ${r} components.`,
+      `Success metric: completed artifact & rehearsal contribution.`,
+      `Quick tip: commit 1-2 small tasks in first meeting.`
+    ]
+  }));
+  return {title:`Starter Pack — ${topCareer}`, bullets, roleSpecs};
+}
+
+// ---------- UI rendering ----------
+function renderProfiles(){
+  const el = document.getElementById('studentList'); el.innerHTML='';
+  students.forEach(s=>{
+    const div = document.createElement('div'); div.className='student';
+    const initials = (s.name||'').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase() || 'S';
+    div.innerHTML = `<div class="avatar">${initials}</div>
+      <div style="flex:1">
+        <strong>${escapeHtml(s.name)}</strong>
+        <div class="small muted">${escapeHtml(s.interests.join(', '))}</div>
+        <div style="margin-top:6px"><span class="small muted">skills: ${escapeHtml(s.skills.join(', '))} · roles: ${escapeHtml(s.roles.join(', '))}</span></div>
+      </div>
+      <div style="text-align:right"><div class="small muted">V:${s.vark.v} A:${s.vark.a} R:${s.vark.r} K:${s.vark.k}</div>
+      <div style="margin-top:8px"><button style="background:#ff6b6b;color:#fff;border:none;padding:6px;border-radius:6px" onclick="removeProfile('${s.id}')">Remove</button></div></div>`;
+    el.appendChild(div);
+  });
+  document.getElementById('count').textContent = students.length;
+}
+
+function renderGroups(){
+  const area = document.getElementById('groupsArea'); area.innerHTML='';
+  if(groups.length===0){ area.innerHTML = '<div class="small muted">No groups generated yet</div>'; return; }
+  groups.forEach((g,i)=>{
+    const card = document.createElement('div'); card.className='group';
+    card.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong>Group ${i+1}</strong><div class="score">${g.score}%</div></div>`;
+    // members
+    const membersHtml = g.members.map(id=>{
+      const s = students.find(x=>x.id===id);
+      return `<div style="display:flex;justify-content:space-between;padding:6px 0"><div><strong>${escapeHtml(s.name)}</strong><div class="small muted">${escapeHtml(s.interests.join(', '))}</div></div><div class="small muted">${escapeHtml((s.roles[0]||'member'))}</div></div>`;
+    }).join('');
+    const membersWrap = document.createElement('div'); membersWrap.innerHTML = membersHtml;
+    card.appendChild(membersWrap);
+    const btn = document.createElement('button'); btn.textContent = 'View Starter Pack';
+    btn.onclick = ()=>{
+      const sp = starterPackFor(g);
+      let text = sp.title + '\n\n';
+      sp.bullets.forEach(b=> text += '• ' + b + '\n');
+      text += '\nRoles:\n';
+      sp.roleSpecs.forEach(r => { text += `- ${r.name} (${r.role}):\n`; r.bullets.forEach(b=> text += '   • ' + b + '\n'); });
+      // add scoring details
+      const vocab = buildVocab(); const textEmb = students.map(s=>textVecFor(s,vocab));
+      text += '\nScoring breakdown:\n';
+      text += `- interest similarity: ${Math.round(avgPairwiseTextSim(g.members, textEmb)*100)}%\n`;
+      text += `- VARK variance (lower better): ${Math.round(varkVariance(g.members)*100)}\n`;
+      text += `- role coverage: ${Math.round(roleCoverage(g.members, (document.getElementById('reqRoles').value||'').split(',').map(x=>x.trim()).filter(Boolean))*100)}%\n`;
+      document.getElementById('explainArea').textContent = text;
+    };
+    card.appendChild(btn);
+    area.appendChild(card);
+  });
+}
+
+// ---------- CRUD ----------
+function addProfile(obj){ students.push({...obj, id: uid()}); renderProfiles(); }
+function removeProfile(id){ students = students.filter(s=>s.id!==id); renderProfiles(); renderGroups(); document.getElementById('explainArea').textContent='Select a group to see details.'; }
+
+// ---------- UI wiring ----------
+document.getElementById('hideConsent').addEventListener('click', ()=>{
+  // record consent flags locally (for demo)
+  window.demoConsent = {career: document.getElementById('consentCareer').checked, public: document.getElementById('consentPublic').checked};
+  document.getElementById('consentBox').style.display='none';
+});
+
+document.getElementById('addBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('name').value.trim() || 'Student ' + (students.length+1);
+  const interests = document.getElementById('interests').value.split(',').map(x=>x.trim()).filter(Boolean);
+  const skills = document.getElementById('skills').value.split(',').map(x=>x.trim()).filter(Boolean);
+  const roles = document.getElementById('roles').value.split(',').map(x=>x.trim()).filter(Boolean);
+  const vark = {v:+document.getElementById('vark_v').value||0, a:+document.getElementById('vark_a').value||0, r:+document.getElementById('vark_r').value||0, k:+document.getElementById('vark_k').value||0};
+  addProfile({name, interests, skills, roles, vark});
+  ['name','interests','skills','roles'].forEach(id=>document.getElementById(id).value='');
+});
+
+document.getElementById('seedBtn').addEventListener('click', ()=>{
+  students = [
+    {id:uid(), name:'Anna Kowalska', interests:['consulting'], skills:['presenting','research'], roles:['presenter'], vark:{v:30,a:20,r:20,k:30}},
+    {id:uid(), name:'Marek Zielinski', interests:['consulting','finance'], skills:['analysis','excel'], roles:['analyst'], vark:{v:15,a:10,r:55,k:20}},
+    {id:uid(), name:'Ola Nowak', interests:['ux','design'], skills:['design','presentation'], roles:['designer'], vark:{v:50,a:10,r:20,k:20}},
+    {id:uid(), name:'Piotr J', interests:['data','consulting'], skills:['python','analysis'], roles:['analyst','researcher'], vark:{v:20,a:20,r:20,k:40}},
+    {id:uid(), name:'Sara M', interests:['marketing'], skills:['writing','research'], roles:['writer'], vark:{v:25,a:35,r:30,k:10}},
+    {id:uid(), name:'Igor P', interests:['consulting','entrepreneurship'], skills:['presenting','strategy'], roles:['presenter','coordinator'], vark:{v:35,a:25,r:20,k:20}},
+    {id:uid(), name:'Ella R', interests:['consulting'], skills:['project','coordination'], roles:['coordinator'], vark:{v:20,a:30,r:25,k:25}}
+  ];
+  renderProfiles();
+});
+
+document.getElementById('clearBtn').addEventListener('click', ()=>{ if(confirm('Clear all profiles?')){ students=[]; groups=[]; renderProfiles(); renderGroups(); document.getElementById('explainArea').textContent='Select a group to see details.'; } });
+
+document.getElementById('matchBtn').addEventListener('click', ()=>{
+  const groupSize = Math.max(2, +document.getElementById('groupSize').value || 4);
+  const reqRoles = (document.getElementById('reqRoles').value||'').split(',').map(x=>x.trim()).filter(Boolean);
+  let iw=+document.getElementById('wInterest').value, vw=+document.getElementById('wVark').value, rw=+document.getElementById('wRole').value;
+  const sum = iw+vw+rw || 1; const weights = {interest: iw/sum, vark: vw/sum, role: rw/sum};
+  groups = matchEngine(groupSize, reqRoles, weights);
+  renderGroups();
+});
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  if(groups.length===0){ alert('No groups'); return; }
+  let csv = 'group,member,roles,interests,skills\n';
+  groups.forEach((g,i)=> g.members.forEach(id=>{
+    const s = students.find(x=>x.id===id);
+    csv += `${i+1},"${s.name}","${s.roles.join(';')}","${s.interests.join(';')}","${s.skills.join(';')}"\n`;
+  }));
+  const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='studyed_groups.csv'; a.click(); URL.revokeObjectURL(url);
+});
+
+// small helper
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// initial guidance
+document.getElementById('explainArea').textContent = 'Load sample profiles, set weights (career vs VARK vs roles) and click "Run match". Click a group to see starter pack + scoring.';
+
+// init sample
+document.getElementById('seedBtn').click();
+
+</script>
+</body>
+</html>
